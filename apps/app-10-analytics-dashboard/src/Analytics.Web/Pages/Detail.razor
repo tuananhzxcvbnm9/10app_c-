@@ -1,0 +1,48 @@
+@page "/detail/{Id:guid}"
+@inject Analytics.Web.Services.ApiClient ApiClient
+
+<PageHeader Title="Detail" Subtitle="Record information" />
+
+@if (_loading)
+{
+    <MudSkeleton Height="120px" Width="100%" />
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_item is null)
+{
+    <MudAlert Severity="Severity.Warning">Record not found.</MudAlert>
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h6">@_item.Name</MudText>
+        <MudText Color="Color.Secondary">Created: @_item.CreatedAtUtc.ToString("u")</MudText>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private bool _loading = true;
+    private string? _error;
+    private ListItemModel? _item;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var items = await ApiClient.GetItemsAsync();
+            _item = items.FirstOrDefault(x => x.Id == Id);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

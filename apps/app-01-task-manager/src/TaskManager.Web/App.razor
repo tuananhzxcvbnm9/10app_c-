@@ -1,0 +1,28 @@
+@using MudBlazor
+@implements IDisposable
+@inject TaskManager.Web.Services.ThemeState ThemeState
+
+<MudThemeProvider IsDarkMode="@ThemeState.IsDarkMode" Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(Layout.MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(Layout.MainLayout)">
+            <MudAlert Severity="Severity.Warning">Page not found.</MudAlert>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    private readonly MudTheme _theme = new();
+
+    protected override void OnInitialized() => ThemeState.OnChange += HandleThemeChange;
+
+    private void HandleThemeChange() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => ThemeState.OnChange -= HandleThemeChange;
+}

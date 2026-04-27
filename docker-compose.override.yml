@@ -1,0 +1,4 @@
+services:
+  reverse-proxy:
+    environment:
+      NGINX_ENTRYPOINT_QUIET_LOGS: 1

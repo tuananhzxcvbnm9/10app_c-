@@ -1,0 +1,526 @@
+services:
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    ports: ["80:80"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      app-01-api:
+        condition: service_healthy
+      app-01-web:
+        condition: service_healthy
+      app-02-api:
+        condition: service_healthy
+      app-02-web:
+        condition: service_healthy
+      app-03-api:
+        condition: service_healthy
+      app-03-web:
+        condition: service_healthy
+      app-04-api:
+        condition: service_healthy
+      app-04-web:
+        condition: service_healthy
+      app-05-api:
+        condition: service_healthy
+      app-05-web:
+        condition: service_healthy
+      app-06-api:
+        condition: service_healthy
+      app-06-web:
+        condition: service_healthy
+      app-07-api:
+        condition: service_healthy
+      app-07-web:
+        condition: service_healthy
+      app-08-api:
+        condition: service_healthy
+      app-08-web:
+        condition: service_healthy
+      app-09-api:
+        condition: service_healthy
+      app-09-web:
+        condition: service_healthy
+      app-10-api:
+        condition: service_healthy
+      app-10-web:
+        condition: service_healthy
+    networks: [app-network]
+
+  postgres:
+    image: postgres:16-alpine
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    networks: [app-network]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["${REDIS_PORT:-6379}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    ports: ["${PROMETHEUS_PORT:-9090}:9090"]
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:9090/-/healthy"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports: ["${GRAFANA_PORT:-3000}:3000"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-01-api:
+    build:
+      context: .
+      dockerfile: apps/app-01-task-manager/src/TaskManager.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-01
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app01_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-01-web:
+    build:
+      context: .
+      dockerfile: apps/app-01-task-manager/src/TaskManager.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-01
+    environment:
+      API_BASE_URL: /api/app-01
+    depends_on:
+      app-01-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-02-api:
+    build:
+      context: .
+      dockerfile: apps/app-02-inventory-system/src/Inventory.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-02
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app02_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-02-web:
+    build:
+      context: .
+      dockerfile: apps/app-02-inventory-system/src/Inventory.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-02
+    environment:
+      API_BASE_URL: /api/app-02
+    depends_on:
+      app-02-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-03-api:
+    build:
+      context: .
+      dockerfile: apps/app-03-crm-system/src/Crm.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-03
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app03_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-03-web:
+    build:
+      context: .
+      dockerfile: apps/app-03-crm-system/src/Crm.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-03
+    environment:
+      API_BASE_URL: /api/app-03
+    depends_on:
+      app-03-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-04-api:
+    build:
+      context: .
+      dockerfile: apps/app-04-booking-system/src/Booking.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-04
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app04_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-04-web:
+    build:
+      context: .
+      dockerfile: apps/app-04-booking-system/src/Booking.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-04
+    environment:
+      API_BASE_URL: /api/app-04
+    depends_on:
+      app-04-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-05-api:
+    build:
+      context: .
+      dockerfile: apps/app-05-ecommerce-admin/src/Ecommerce.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-05
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app05_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-05-web:
+    build:
+      context: .
+      dockerfile: apps/app-05-ecommerce-admin/src/Ecommerce.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-05
+    environment:
+      API_BASE_URL: /api/app-05
+    depends_on:
+      app-05-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-06-api:
+    build:
+      context: .
+      dockerfile: apps/app-06-learning-management/src/Lms.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-06
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app06_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-06-web:
+    build:
+      context: .
+      dockerfile: apps/app-06-learning-management/src/Lms.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-06
+    environment:
+      API_BASE_URL: /api/app-06
+    depends_on:
+      app-06-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-07-api:
+    build:
+      context: .
+      dockerfile: apps/app-07-expense-tracker/src/Expense.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-07
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app07_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-07-web:
+    build:
+      context: .
+      dockerfile: apps/app-07-expense-tracker/src/Expense.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-07
+    environment:
+      API_BASE_URL: /api/app-07
+    depends_on:
+      app-07-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-08-api:
+    build:
+      context: .
+      dockerfile: apps/app-08-helpdesk-ticketing/src/Helpdesk.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-08
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app08_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-08-web:
+    build:
+      context: .
+      dockerfile: apps/app-08-helpdesk-ticketing/src/Helpdesk.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-08
+    environment:
+      API_BASE_URL: /api/app-08
+    depends_on:
+      app-08-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-09-api:
+    build:
+      context: .
+      dockerfile: apps/app-09-blog-cms/src/Blog.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-09
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app09_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-09-web:
+    build:
+      context: .
+      dockerfile: apps/app-09-blog-cms/src/Blog.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-09
+    environment:
+      API_BASE_URL: /api/app-09
+    depends_on:
+      app-09-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-10-api:
+    build:
+      context: .
+      dockerfile: apps/app-10-analytics-dashboard/src/Analytics.Api/Dockerfile
+    env_file: .env
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      App__PathBase: /api/app-10
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=app10_db;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      Jwt__Secret: ${JWT_SECRET}
+      Cors__AllowedOrigins: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+  app-10-web:
+    build:
+      context: .
+      dockerfile: apps/app-10-analytics-dashboard/src/Analytics.Web/Dockerfile
+      args:
+        API_BASE_URL: /api/app-10
+    environment:
+      API_BASE_URL: /api/app-10
+    depends_on:
+      app-10-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+    networks: [app-network]
+
+volumes:
+  postgres-data:
+  grafana-data:
+
+networks:
+  app-network:
+    driver: bridge

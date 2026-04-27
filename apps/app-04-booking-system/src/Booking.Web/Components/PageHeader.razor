@@ -1,0 +1,9 @@
+<SaasPageHeader Title="@Title" Subtitle="@Subtitle">
+    <Actions>@Actions</Actions>
+</SaasPageHeader>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

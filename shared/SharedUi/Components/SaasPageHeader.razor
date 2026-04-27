@@ -1,0 +1,19 @@
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+    <MudStack>
+        <MudText Typo="Typo.h4">@Title</MudText>
+        @if (!string.IsNullOrWhiteSpace(Subtitle))
+        {
+            <MudText Color="Color.Secondary">@Subtitle</MudText>
+        }
+    </MudStack>
+    @if (Actions is not null)
+    {
+        <MudStack Row="true">@Actions</MudStack>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}
