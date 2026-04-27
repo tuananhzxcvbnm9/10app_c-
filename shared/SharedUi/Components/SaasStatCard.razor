@@ -1,0 +1,22 @@
+<MudPaper Class="pa-4 stat-card" Elevation="1">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+        <MudStack>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">@Title</MudText>
+            <MudText Typo="Typo.h5">@Value</MudText>
+            @if (!string.IsNullOrWhiteSpace(SubText))
+            {
+                <MudText Typo="Typo.caption">@SubText</MudText>
+            }
+        </MudStack>
+        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Size="Size.Large">
+            <MudIcon Icon="@Icon" />
+        </MudAvatar>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string? SubText { get; set; }
+    [Parameter] public string Icon { get; set; } = Icons.Material.Filled.Dashboard;
+}

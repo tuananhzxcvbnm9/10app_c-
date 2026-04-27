@@ -1,0 +1,16 @@
+<MudDialog>
+    <DialogContent>
+        <MudText>@Message</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Outlined" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="Confirm">Delete</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public string Message { get; set; } = "Are you sure?";
+    private void Cancel() => MudDialog.Cancel();
+    private void Confirm() => MudDialog.Close(DialogResult.Ok(true));
+}

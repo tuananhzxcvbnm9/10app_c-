@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-07-config
+  namespace: csharp-ten-apps
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  ASPNETCORE_URLS: http://+:8080
+  Database__ApplyMigrationsOnStartup: "false"
+  Cors__AllowedOrigins: https://example.local

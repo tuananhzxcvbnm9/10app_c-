@@ -1,0 +1,56 @@
+@page "/list"
+@inject Booking.Web.Services.ApiClient ApiClient
+@inject IDialogService DialogService
+@inject Booking.Web.Services.ToastService ToastService
+
+<PageHeader Title="Data Table" Subtitle="Search, filter, sort, pagination" />
+
+@if (_loading)
+{
+    <MudSkeleton Height="240px" Width="100%" />
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <MudAlert Severity="Severity.Error">@_error</MudAlert>
+}
+else if (_items.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">Empty state: no records found.</MudAlert>
+}
+else
+{
+    <DataTable Items="_items" Loading="_loading" />
+    <MudButton Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Delete" Class="mt-3" OnClick="OpenConfirmDialog">Delete (demo)</MudButton>
+}
+
+@code {
+    private bool _loading = true;
+    private string? _error;
+    private IReadOnlyList<ListItemModel> _items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _items = await ApiClient.GetItemsAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenConfirmDialog()
+    {
+        var dialog = await DialogService.ShowAsync<Components.ConfirmDialog>("Confirm deletion", new DialogParameters { ["Message"] = "Delete selected record?" });
+        var result = await dialog.Result;
+        if (!result.Canceled)
+        {
+            ToastService.Success("Delete confirmed (demo). API delete endpoint chưa được expose trong scaffold.");
+        }
+    }
+}

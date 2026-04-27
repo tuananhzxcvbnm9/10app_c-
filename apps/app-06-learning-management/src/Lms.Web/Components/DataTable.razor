@@ -1,0 +1,29 @@
+<MudTable T="ListItemModel" Items="Items" Filter="FilterFunc" Dense="true" Hover="true" Loading="Loading">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Records</MudText>
+        <MudSpacer />
+        <MudTextField @bind-Value="SearchText" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" />
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Name</MudTh>
+        <MudTh>Created UTC</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Created">@context.CreatedAtUtc.ToString("u")</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudAlert Severity="Severity.Info">No data available.</MudAlert>
+    </NoRecordsContent>
+    <PagerContent>
+        <MudTablePager RowsPerPageString="Rows per page" />
+    </PagerContent>
+</MudTable>
+
+@code {
+    [Parameter] public IEnumerable<ListItemModel> Items { get; set; } = [];
+    [Parameter] public bool Loading { get; set; }
+    private string SearchText { get; set; } = string.Empty;
+
+    private bool FilterFunc(ListItemModel item) => string.IsNullOrWhiteSpace(SearchText) || item.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+}

@@ -1,0 +1,43 @@
+@page "/create"
+@inject Booking.Web.Services.ApiClient ApiClient
+@inject Booking.Web.Services.ToastService ToastService
+
+<PageHeader Title="Create / Edit" Subtitle="Validated form" />
+
+<MudPaper Class="pa-4" Width="100%">
+    <MudForm @ref="_form" Model="_model" Validation="Validate">
+        <MudTextField T="string" Label="Name" @bind-Value="_model.Name" Required="true" RequiredError="Name is required" />
+        <MudStack Row="true" Class="mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
+        </MudStack>
+    </MudForm>
+</MudPaper>
+
+@code {
+    private MudForm _form = default!;
+    private FormModel _model = new();
+
+    private IEnumerable<string> Validate(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            yield return "Name is required";
+        if (value.Length > 200)
+            yield return "Max length is 200";
+    }
+
+    private async Task SaveAsync()
+    {
+        await _form.Validate();
+        if (!_form.IsValid)
+            return;
+
+        await ApiClient.CreateAsync(_model.Name);
+        ToastService.Success("Saved successfully");
+        _model = new FormModel();
+    }
+
+    private sealed class FormModel
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+}

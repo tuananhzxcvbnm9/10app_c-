@@ -1,0 +1,47 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["prometheus:9090"]
+  - job_name: app-01-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-01-api:8080"]
+  - job_name: app-02-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-02-api:8080"]
+  - job_name: app-03-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-03-api:8080"]
+  - job_name: app-04-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-04-api:8080"]
+  - job_name: app-05-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-05-api:8080"]
+  - job_name: app-06-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-06-api:8080"]
+  - job_name: app-07-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-07-api:8080"]
+  - job_name: app-08-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-08-api:8080"]
+  - job_name: app-09-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-09-api:8080"]
+  - job_name: app-10-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app-10-api:8080"]

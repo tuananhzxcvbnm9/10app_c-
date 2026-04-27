@@ -1,0 +1,18 @@
+html, body {
+  font-family: Inter, Roboto, Arial, sans-serif;
+}
+
+.top-search {
+  max-width: 280px;
+  margin-right: 8px;
+}
+
+.stat-card {
+  border-radius: 14px;
+}
+
+@media (max-width: 768px) {
+  .top-search {
+    display: none;
+  }
+}

@@ -1,0 +1,39 @@
+@inherits LayoutComponentBase
+@inject TaskManager.Web.Services.ThemeState ThemeState
+@inject TaskManager.Web.Services.AuthService AuthService
+
+<MudLayout>
+    <MudAppBar Elevation="1" Dense="true">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="ToggleDrawer" />
+        <MudText Typo="Typo.h6">Task Manager</MudText>
+        <MudSpacer />
+        <MudTextField T="string" Placeholder="Search..." Variant="Variant.Outlined" Dense="true" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="top-search" />
+        <MudIconButton Icon="@(ThemeState.IsDarkMode ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)" OnClick="ThemeState.Toggle" />
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle">
+            <MudText Class="px-4 py-2">@AuthService.UserDisplayName</MudText>
+            <MudDivider />
+            <MudMenuItem>Profile</MudMenuItem>
+            <MudMenuItem>Logout</MudMenuItem>
+        </MudMenu>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive">
+        <MudNavMenu>
+            <MudNavLink Href="/" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+            <MudNavLink Href="/list" Icon="@Icons.Material.Filled.TableRows">Data Table</MudNavLink>
+            <MudNavLink Href="/create" Icon="@Icons.Material.Filled.Add">Create</MudNavLink>
+            <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Lock">Login</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}

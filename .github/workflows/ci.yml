@@ -1,0 +1,25 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Restore
+        run: dotnet restore CSharpTenApps.sln
+      - name: Build
+        run: dotnet build CSharpTenApps.sln --no-restore
+      - name: Test
+        run: dotnet test CSharpTenApps.sln --no-build
+      - name: Format check
+        run: dotnet format CSharpTenApps.sln --verify-no-changes
+      - name: Docker compose validate
+        run: docker compose config
+      - name: Build sample images
+        run: |
+          docker build -f apps/app-01-task-manager/src/TaskManager.Api/Dockerfile .
+          docker build -f apps/app-01-task-manager/src/TaskManager.Web/Dockerfile .

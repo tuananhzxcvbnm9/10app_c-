@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-09-web
+  namespace: csharp-ten-apps
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-09-web
+  template:
+    metadata:
+      labels:
+        app: app-09-web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/example/app-09-web:latest
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
