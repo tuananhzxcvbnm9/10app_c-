@@ -14,7 +14,16 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ToastService>();
 
 var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "/api/app-08";
-builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(apiBaseUrl, UriKind.RelativeOrAbsolute) });
+if (!apiBaseUrl.EndsWith("/", StringComparison.Ordinal))
+{
+    apiBaseUrl += "/";
+}
+
+var resolvedApiBaseUri = Uri.TryCreate(apiBaseUrl, UriKind.Absolute, out var absoluteApiBaseUri)
+    ? absoluteApiBaseUri
+    : new Uri(new Uri(builder.HostEnvironment.BaseAddress), apiBaseUrl);
+
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = resolvedApiBaseUri });
 builder.Services.AddScoped<ApiClient>();
 
 await builder.Build().RunAsync();
